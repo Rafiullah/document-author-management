@@ -50,7 +50,7 @@ public class DocumentController {
         return convertToDTOBasic(documentService.findDocumentById(id));
     }
 
-    @GetMapping("/idb/{idb}")
+    @GetMapping("/idbr/{idbr}")
     public DocumentDTOBasicNoRef getDocumentByIdBasicNoRef(@PathVariable("idbr") Long id){
         return convertToDTOBasicNoRef(documentService.findDocumentById(id));
     }
