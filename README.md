@@ -14,3 +14,7 @@ Through the system a user can perform:
 - **Maven** for dependency management
 - **JPA** for database interaction (using Hibernate)
 - **Postgresql** as database
+
+## API Documentation
+API Documentation can be accessed through: </br>
+[http://localhost:8090/swagger-ui/index.html](localhost:8090/swagger-ui/index.html)
