@@ -17,4 +17,4 @@ Through the system a user can perform:
 
 ## API Documentation
 API Documentation can be accessed through: </br>
-[http://localhost:8090/swagger-ui/index.html](localhost:8090/swagger-ui/index.html)
+[http://localhost:8090/swagger-ui/index.html](http://localhost:8090/swagger-ui/index.html)
