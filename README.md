@@ -65,7 +65,7 @@ After building the project, you can run the application through following comman
 
 Send a POST request to the authentication endpoint along with credentials defined below:
 
-- **URL**: (http://localhost:8090/authenticate)[http://localhost:8090/authenticate]
+- **URL**: [http://localhost:8090/authenticate](http://localhost:8090/authenticate)
 - **Method**: POST
 - **Content-Type**: application/json
 - **Body** (raw JSON):
