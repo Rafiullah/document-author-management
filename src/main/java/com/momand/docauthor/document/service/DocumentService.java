@@ -8,7 +8,9 @@ import com.momand.docauthor.exception.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class DocumentService {
@@ -29,11 +31,15 @@ public class DocumentService {
     }
 
     public DocumentEntity findDocumentById(Long id){
-        Optional<DocumentEntity> documentEntity = documentRepository.findById(id);
-        documentProducerKafka.sendDocumentEvent("Read document with id "+ id);
-        return documentEntity.orElse(null);
+        //Optional<DocumentEntity> documentEntity = documentRepository.findById(id);
+        //documentProducerKafka.sendDocumentEvent("Read document with id "+ id);
+        //return documentEntity.orElse(null);
+        //return documentRepository.findById(id)
+               // .orElseThrow(() -> new NotFoundException("Document not found with id " + id));
+        return findOrThrow(id);
     }
 
+    @Transactional
     public void removeDocumentById(Long id){
         documentRepository.deleteById(id);
     }
@@ -46,6 +52,7 @@ public class DocumentService {
     }
 
     //create new document and add existing author for this document
+    @Transactional
     public DocumentEntity addNewDocumentForExistingAuthor(DocumentEntity documentEntity, Long authorId){
         AuthorEntity existingAuthor = authorService.findAuthorById(authorId);
         Set<AuthorEntity> authors = new HashSet<>();
@@ -55,36 +62,38 @@ public class DocumentService {
     }
 
     //add existing document to existing author
+    @Transactional
     public DocumentEntity addExistingDocumentToExistingAuthor(Long documentId, Long authorId){
-
         DocumentEntity existingDocument = findDocumentById(documentId);
         AuthorEntity existingAuthor = authorService.findAuthorById(authorId);
-
         existingDocument.getAuthors().add(existingAuthor);
-
         return documentRepository.save(existingDocument);
     }
 
     //add a reference to document
+    @Transactional
     public DocumentEntity addReferenceToDocument(Long documentId, Long referenceId){
-
         DocumentEntity document = findDocumentById(documentId);
         DocumentEntity reference = findDocumentById(referenceId);
-
         document.getReferences().add(reference);
         return documentRepository.save(reference);
     }
 
-    public void updateDocumentEntity(Long id, DocumentEntity documentEntity){
+    @Transactional
+    public DocumentEntity updateDocumentEntity(Long id, DocumentEntity documentEntity){
         findOrThrow(id);
-        documentRepository.save(documentEntity);
+        var entity = documentRepository.save(documentEntity);
+        documentProducerKafka.sendDocumentEvent("Update document "+ id);
+        return entity;
     }
+
     private DocumentEntity findOrThrow(final Long id){
         return documentRepository.findById(id).orElseThrow(
-                () -> new NotFoundException("Document not found with " + id + " not found.")
+                () -> new NotFoundException("Document with " + id + " not found.")
         );
     }
 
+    @Transactional
     public DocumentEntity addNewDocumentBasic(DocumentEntity documentEntity){
         return documentRepository.save(documentEntity);
     }

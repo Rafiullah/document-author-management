@@ -34,14 +34,14 @@ public class AuthorController {
 
     //getAuthorsWithDocs
     @GetMapping
-    public List<AuthorDTOBasic> getAuthors() {
+    public List<AuthorDTOBasic> getDocuments() {
         return StreamSupport
                 .stream(authorService.findAllAuthors().spliterator(), false)
                 .map(this::convertToDTOBasic)
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/listauthorsDetailsOnly")
+    @GetMapping("/list-authors-details-only")
     public List<AuthorDTOBasicNoRef> getAuthorsWithoutDocs(){
         return StreamSupport
                 .stream(authorService.findAllAuthors().spliterator(), false)
@@ -49,28 +49,17 @@ public class AuthorController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/listauthorsLoop")
-    public List<AuthorDTOBasicNoRef> getAuthorsForLoop() {
-        var authors = authorService.findAllAuthors();
-        List<AuthorDTOBasicNoRef> authorsDtoList = new ArrayList<>();
-
-        for (var author : authors) {
-            authorsDtoList.add(convertToDTOBasicNoRef(author));
-        }
-        return authorsDtoList;
-    }
-
     @GetMapping("/{id}")
     public AuthorDTOBasic getAuthorByIdBasic(@PathVariable("id") Long id){
         return convertToDTOBasic(authorService.findAuthorById(id));
     }
 
-    @GetMapping("/{id}/authorDetails")
+    @GetMapping("/{id}/author-details")
     public AuthorDTOBasicNoRef getAuthorByIdBasicNoRef(@PathVariable("id") Long id){
         return convertToDTOBasicNoRef(authorService.findAuthorById(id));
     }
 
-    @GetMapping("/{id}/listArticlesOnly")
+    @GetMapping("/{id}/list-documents-only")
     public AuthorDTODocsOnly getListOfDocsByAnAuthor(@PathVariable("id") Long id){
         return convertToDTODocsOnly(authorService.findAuthorById(id));
     }

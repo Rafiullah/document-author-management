@@ -14,7 +14,7 @@ public class DocumentDTOBasic {
 
     private Set<AuthorDTOBasicNoRef> authors;
 
-    private Set<DocumentDTOBasic> references;
+    private Set<DocumentDTOBasicNoRef> references;
 
     public void setTitle(String title) {
         this.title = title;
@@ -28,7 +28,6 @@ public class DocumentDTOBasic {
         this.body = body;
     }
 
-
     public Set<AuthorDTOBasicNoRef> getAuthors() {
         return authors;
     }
@@ -37,11 +36,11 @@ public class DocumentDTOBasic {
         this.authors = authors;
     }
 
-    public Set<DocumentDTOBasic> getReferences() {
+    public Set<DocumentDTOBasicNoRef> getReferences() {
         return references;
     }
 
-    public void setReferences(Set<DocumentDTOBasic> references) {
+    public void setReferences(Set<DocumentDTOBasicNoRef> references) {
         this.references = references;
     }
 }

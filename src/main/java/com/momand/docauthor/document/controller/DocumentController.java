@@ -1,11 +1,13 @@
 package com.momand.docauthor.document.controller;
 
-import com.momand.docauthor.author.dto.AuthorDTO;
+import com.momand.docauthor.author.dto.AuthorDTOBasicNoRef;
 import com.momand.docauthor.document.dto.DocumentDTO;
 import com.momand.docauthor.document.dto.DocumentDTOBasic;
+import com.momand.docauthor.document.dto.DocumentDTOBasicInfo;
 import com.momand.docauthor.document.dto.DocumentDTOBasicNoRef;
 import com.momand.docauthor.document.entity.DocumentEntity;
 import com.momand.docauthor.document.service.DocumentService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -17,7 +19,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequestMapping("/api/v1/documents")
 @RestController
@@ -33,8 +34,9 @@ public class DocumentController {
         this.modelMapper = modelMapper;
     }
 
+    @Operation(summary = "Retrieves all documents along with their contents, authors and references")
     @GetMapping
-    public List<DocumentDTOBasic> getAllDocuments() {
+    public List<DocumentDTOBasic> getDocuments() {
         var documents = documentService.findAllDocuments();
         List<DocumentDTOBasic> documentsDtoList = new ArrayList<>();
         for (var document : documents) {
@@ -43,84 +45,71 @@ public class DocumentController {
         return documentsDtoList;
     }
 
-    //get list of all documents
-    @GetMapping("/allDocuments")
-    public List<DocumentDTO> getListOfAllDocuments(){
-        Iterable<DocumentEntity> iterable = documentService.findAllDocuments();
-
-        List<DocumentDTO> documentList = new ArrayList<>();
-
-        //convert Iterable to List of documents without authors and references
-        iterable.forEach(documentEntity -> {
-
-            DocumentDTO documentDTO = convertToDTO(documentEntity);
-
-            DocumentDTO newDocumentDTO = new DocumentDTO();
-            newDocumentDTO.setId(documentDTO.getId());
-            newDocumentDTO.setTitle(documentDTO.getTitle());
-            newDocumentDTO.setBody(documentDTO.getBody());
-
-            documentList.add(documentDTO);
-        });
-
-
-        return documentList ;
+    @Operation(summary = "Retrieves a list of documents")
+    @GetMapping("/list-docs")
+    public List<DocumentDTOBasicNoRef> getDocumentsWithoutRefsOrAuthors() {
+        var documents = documentService.findAllDocuments();
+        List<DocumentDTOBasicNoRef> documentsDtoList = new ArrayList<>();
+        for (var document : documents) {
+            documentsDtoList.add(convertToDTOBasicNoRef(document));
+        }
+        return documentsDtoList;
     }
 
-    //get set of all references for a document
-    @GetMapping("/{docId}/allDocuments")
+    @Operation(summary = "Retrieves references of a document")
+    @GetMapping("/{docId}/references")
     public Set<DocumentDTO> getAllReferencesForDocument(@PathVariable Long docId){
         DocumentEntity documentEntity = documentService.findDocumentById(docId);
         DocumentDTO documentDTO = convertToDTO(documentEntity);
         return documentDTO.getReferences();
     }
 
-    //add reference to a document
-    @PostMapping("/addReference/{documentId}/{referenceId}")
-    public DocumentDTO postReferenceToDocument(@PathVariable Long documentId, @PathVariable Long referenceId){
-        var document = documentService.addReferenceToDocument(documentId, referenceId);
-        return convertToDTO(document);
+    @Operation(summary = "Retrieves authors of a document")
+    @GetMapping("/{docId}/authors")
+    public Set<AuthorDTOBasicNoRef> getAuthorsForDocument(@PathVariable Long docId){
+        DocumentEntity documentEntity = documentService.findDocumentById(docId);
+        DocumentDTOBasic documentDTO = convertToDTOBasic(documentEntity);
+        return documentDTO.getAuthors();
     }
 
-    //get all authors for a document
-    @GetMapping("/{docId}/allAuthors")
-    public void getAllAuthorsForDocument(@PathVariable Long docId){
-    }
-
-    //get all documents for an author id
-    @GetMapping("/{authorId}/allDocuments")
-    public void getAllDocumentsForAuthor(@PathVariable Long authorId){
-
-    }
-
-    //Get document for a specific id
+    @Operation(summary = "Retrieves a specific document containing title, contents, author and references")
     @GetMapping("/{id}")
-    public DocumentDTO getDocumentById(@PathVariable("id") Long id){
-        return convertToDTO(documentService.findDocumentById(id));
-    }
-
-    @GetMapping("/idb/{idb}")
-    public DocumentDTOBasic getDocumentByIdBasic(@PathVariable("idb") Long id){
+    public DocumentDTOBasic getDocumentById(@PathVariable("id") Long id){
         return convertToDTOBasic(documentService.findDocumentById(id));
     }
 
-    @GetMapping("/idbr/{idbr}")
-    public DocumentDTOBasicNoRef getDocumentByIdBasicNoRef(@PathVariable("idbr") Long id){
+    @Operation(summary = "Retrieves a specific document's title and content")
+    @GetMapping("/{id}/document-title-content")
+    public DocumentDTOBasicNoRef getListOfDocument(@PathVariable("id") Long id){
         return convertToDTOBasicNoRef(documentService.findDocumentById(id));
     }
 
-    //add new document
-    @PostMapping("/addNewDocument")
-    public DocumentDTO postNewDocument(@Valid @RequestBody DocumentDTO documentDTO){
-        logger.info("Received DocumentDTO: {}", documentDTO.toString());
-        var entity = convertToEntity(documentDTO);
-        logger.info("Converted Document Entity: {}", entity);
-        var document = documentService.addNewDocument(entity);
-        return convertToDTO(document);
+    @Operation(summary = "Retrieves a specific document's title, authors and references")
+    @GetMapping("/{id}/short-info")
+    public DocumentDTOBasicInfo getDocumentShortInfo(@PathVariable("id") Long id){
+        return convertToDTOBasicInfo(documentService.findDocumentById(id));
     }
 
-    //add new author to existing documents
-    @PostMapping("/addNewDocumentToExistingAuthor/{authorId}")
+    @Operation(summary = "Creates/Adds a new document")
+    @PostMapping
+    public DocumentDTOBasic postNewDocument(@Valid @RequestBody DocumentDTOBasic documentDTOBasic){
+        logger.info("Received DocumentDTO: {}", documentDTOBasic.toString());
+        var entity = convertBasicDTOToEntity(documentDTOBasic);
+        logger.info("Converted Document Entity: {}", entity);
+        var document = documentService.addNewDocument(entity);
+        return convertToDTOBasic(document);
+    }
+
+    @Operation(summary = "Adds a document without authors or references")
+    @PostMapping("/add-document-only")
+    public DocumentDTOBasicNoRef postNewDocumentBasic(@Valid @RequestBody DocumentDTOBasicNoRef documentDTO){
+        var entity = convertBasicNoRefDTOToEntity(documentDTO);
+        var document = documentService.addNewDocument(entity);
+        return convertToDTOBasicNoRef(document);
+    }
+
+    @Operation(summary = "Creates a new document and assigns an existing author to it")
+    @PutMapping("/add-new-document-to-existing-author/{authorId}")
     public DocumentDTO postNewAuthorForExistingDocuments(@Valid @RequestBody DocumentDTO documentDTO, @PathVariable Long authorId){
         logger.info("Received DocumentDTO: {}", documentDTO.toString());
         var entity = convertToEntity(documentDTO);
@@ -129,88 +118,48 @@ public class DocumentController {
         return convertToDTO(document);
     }
 
-    //add existing author to existing document
-    @PostMapping("/assignDocumentToAuthor/{docId}/{authId}")
-    public DocumentDTO postExistingAuthorForExistingDocuments(@PathVariable Long docId, @PathVariable Long authId){
+    @Operation(summary = "Assigns a document to an author, both author and documents are available already")
+    @PutMapping("/assign-document-to-author/{docId}/{authId}")
+    public DocumentDTOBasic postExistingAuthorForExistingDocuments(@PathVariable Long docId, @PathVariable Long authId){
         var document = documentService.addExistingDocumentToExistingAuthor(docId, authId);
+        return convertToDTOBasic(document);
+    }
+
+    @Operation(summary = "Adds a reference to a document")
+    @PostMapping("/add-reference/{documentId}/{referenceId}")
+    public DocumentDTO postReferenceToDocument(@PathVariable Long documentId, @PathVariable Long referenceId){
+        var document = documentService.addReferenceToDocument(documentId, referenceId);
         return convertToDTO(document);
     }
 
-    //Update Document by Id
+    @Operation(summary = "Updates a document")
     @PutMapping("/{id}")
     public void putDocument(@PathVariable("id") Long id,
-                            @Valid @RequestBody DocumentDTO documentDTO
+                            @Valid @RequestBody DocumentDTOBasic documentDTOBasic
     ) {
-        if (!id.equals(documentDTO.getId())) throw new
+        /*if (!id.equals(documentDTO.getId())) throw new
                 ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "id does not match."
-        );
-        var documentEntity = convertToEntity(documentDTO);
+        );*/
+        var documentEntity = convertBasicDTOToEntity(documentDTOBasic);
         documentService.updateDocumentEntity(id, documentEntity);
     }
 
-    //Delete Document by Id
+    @Operation(summary = "Deletes a document")
     @DeleteMapping("/{id}")
     public void deleteDocumentById(@PathVariable("id") Long id) {
         documentService.removeDocumentById(id);
-    }
-
-
-    @PostMapping("/addNewDocumentBasic")
-    public DocumentDTOBasicNoRef postNewDocumentBasic(@Valid @RequestBody DocumentDTOBasicNoRef documentDTO){
-        var entity = convertBasicNoRefDTOToEntity(documentDTO);
-        var document = documentService.addNewDocument(entity);
-        return convertToDTOBasicNoRef(document);
-    }
-
-    // Method to convert DocumentEntity to DocumentDTO
-    public DocumentDTO convertToDTO(DocumentEntity documentEntity) {
-        DocumentDTO documentDTO = modelMapper.map(documentEntity, DocumentDTO.class);
-
-        // Custom conversion logic to avoid recursive mapping for authors
-        if(documentEntity.getAuthors() != null ) {
-            Set<AuthorDTO> authors = documentEntity.getAuthors().stream()
-                    .map(author -> {
-                        AuthorDTO authorDTO = modelMapper.map(author, AuthorDTO.class);
-                        authorDTO.setDocuments(null); // Break the cycle by not mapping documents
-                        return authorDTO;
-                    })
-                    .collect(Collectors.toSet());
-
-            documentDTO.setAuthors(authors);
-        }
-
-        // Custom conversion logic to avoid recursive mapping for reference
-        if(documentEntity.getReferences() != null ) {
-            Set<DocumentDTO> references = documentEntity.getReferences().stream()
-                    .map(reference -> {
-                        DocumentDTO referenceDTO = modelMapper.map(reference, DocumentDTO.class);
-                        referenceDTO.setReferences(null);// Break the cycle by not mapping documents
-                        referenceDTO.setAuthors(null);
-                        return referenceDTO;
-                    })
-                    .collect(Collectors.toSet());
-
-            documentDTO.setReferences(references);
-        }
-
-        return documentDTO;
     }
 
     // Method to convert DocumentDTO to DocumentEntity
     public DocumentEntity convertToEntity(DocumentDTO documentDTO) {
         return modelMapper.map(documentDTO, DocumentEntity.class);
     }
-    /*
+
     private DocumentDTO convertToDTO(DocumentEntity entity){
         return modelMapper.map(entity, DocumentDTO.class);
     }
-
-    private DocumentEntity convertToEntity(DocumentDTO dto){
-        return modelMapper.map(dto, DocumentEntity.class);
-
-    }*/
 
     private DocumentDTOBasic convertToDTOBasic(DocumentEntity entity){
         return modelMapper.map(entity, DocumentDTOBasic.class);
@@ -227,5 +176,9 @@ public class DocumentController {
 
     private DocumentEntity convertBasicNoRefDTOToEntity(DocumentDTOBasicNoRef documentDTOBasicNoRef){
         return modelMapper.map(documentDTOBasicNoRef, DocumentEntity.class);
+    }
+
+    private DocumentDTOBasicInfo convertToDTOBasicInfo(DocumentEntity entity){
+        return modelMapper.map(entity, DocumentDTOBasicInfo.class);
     }
 }
