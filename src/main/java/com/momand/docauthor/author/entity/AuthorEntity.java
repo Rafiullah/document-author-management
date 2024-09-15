@@ -19,12 +19,8 @@ public class AuthorEntity {
     @NotNull(message = "Last Name is required")
     private String lastName;
 
-
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "authors")
-    //@JsonIgnoreProperties("authors")
-    //@JsonBackReference
     private Set<DocumentEntity> documents = new HashSet<>();
-
 
     public Long getId() {
         return id;

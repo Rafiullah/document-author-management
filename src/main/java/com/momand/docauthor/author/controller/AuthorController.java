@@ -3,18 +3,19 @@ package com.momand.docauthor.author.controller;
 import com.momand.docauthor.author.dto.AuthorDTO;
 import com.momand.docauthor.author.dto.AuthorDTOBasic;
 import com.momand.docauthor.author.dto.AuthorDTOBasicNoRef;
+import com.momand.docauthor.author.dto.AuthorDTODocsOnly;
 import com.momand.docauthor.author.entity.AuthorEntity;
 import com.momand.docauthor.author.service.AuthorService;
-import com.momand.docauthor.document.dto.DocumentDTO;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -31,106 +32,78 @@ public class AuthorController {
         this.modelMapper = modelMapper;
     }
 
-    @GetMapping("/{id}")
-    public AuthorDTO getAuthorById(@PathVariable("id") Long id){
-        return convertToDTO(authorService.findAuthorById(id));
+    //getAuthorsWithDocs
+    @GetMapping
+    public List<AuthorDTOBasic> getAuthors() {
+        return StreamSupport
+                .stream(authorService.findAllAuthors().spliterator(), false)
+                .map(this::convertToDTOBasic)
+                .collect(Collectors.toList());
     }
 
-    @GetMapping("/idb/{idb}")
-    public AuthorDTOBasic getAuthorByIdBasic(@PathVariable("idb") Long id){
+    @GetMapping("/listauthorsDetailsOnly")
+    public List<AuthorDTOBasicNoRef> getAuthorsWithoutDocs(){
+        return StreamSupport
+                .stream(authorService.findAllAuthors().spliterator(), false)
+                .map(this::convertToDTOBasicNoRef)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/listauthorsLoop")
+    public List<AuthorDTOBasicNoRef> getAuthorsForLoop() {
+        var authors = authorService.findAllAuthors();
+        List<AuthorDTOBasicNoRef> authorsDtoList = new ArrayList<>();
+
+        for (var author : authors) {
+            authorsDtoList.add(convertToDTOBasicNoRef(author));
+        }
+        return authorsDtoList;
+    }
+
+    @GetMapping("/{id}")
+    public AuthorDTOBasic getAuthorByIdBasic(@PathVariable("id") Long id){
         return convertToDTOBasic(authorService.findAuthorById(id));
     }
 
-    @GetMapping("/idbr/{idbr}")
-    public AuthorDTOBasicNoRef getAuthorByIdBasicNoRef(@PathVariable("idbr") Long id){
+    @GetMapping("/{id}/authorDetails")
+    public AuthorDTOBasicNoRef getAuthorByIdBasicNoRef(@PathVariable("id") Long id){
         return convertToDTOBasicNoRef(authorService.findAuthorById(id));
     }
 
-    //add new author
-    @PostMapping("/addNewAuthor")
-    public AuthorDTO postNewAuthor(@Valid @RequestBody AuthorDTO authorDTO){
-        logger.info("Received AuthorDTO: {}", authorDTO.toString());
-        var entity = convertToEntity(authorDTO);
-        logger.info("Converted Author Entity: {}", entity);
+    @GetMapping("/{id}/listArticlesOnly")
+    public AuthorDTODocsOnly getListOfDocsByAnAuthor(@PathVariable("id") Long id){
+        return convertToDTODocsOnly(authorService.findAuthorById(id));
+    }
+
+    @PostMapping
+    public AuthorDTOBasicNoRef postNewOther(@Valid @RequestBody AuthorDTOBasicNoRef authorDTOBasicNoRef){
+        var entity = convertToEntity(authorDTOBasicNoRef);
         var author = authorService.addNewAuthorEntity(entity);
-        return convertToDTO(author);
+        return convertToDTOBasicNoRef(author);
     }
 
-    //add new author to existing documents
-    @PostMapping("/addNewAuthorToExistingDocument/{docId}")
-    public AuthorDTO postNewAuthorForExistingDocuments(@Valid @RequestBody AuthorDTO authorDTO, @PathVariable Long docId){
-        logger.info("Received AuthorDTO: {}", authorDTO.toString());
-        var entity = convertToEntity(authorDTO);
-        logger.info("Converted Author Entity: {}", entity);
-        var author = authorService.addNewAuthorForExistingDocument(entity, docId);
-        return convertToDTO(author);
+    @PutMapping("/{id}")
+    public void putAuthor(@PathVariable("id") Long id,
+                            @Valid @RequestBody AuthorDTOBasic authorDTOBasic
+    ) {
+        if (!id.equals(authorDTOBasic.getId())) throw new
+                ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "id does not match."
+        );
+        var authorEntity = convertToEntity(authorDTOBasic);
+        authorService.updateAuthorEntity(id, authorEntity);
     }
 
-    //add existing author to existing document
-    @PostMapping("/assignAuthorToDocument/{authId}/{docId}")
-    //public String postExistingAuthorForExistingDocuments(@PathVariable Long authId, @PathVariable Long docId){
-    public AuthorDTO postExistingAuthorForExistingDocuments(@PathVariable Long authId, @PathVariable Long docId){
-        var author = authorService.addExistingAuthorToExistingDocument(authId, docId);
-        return convertToDTO(author);
-    }
-
-    @DeleteMapping("/{id}")
+    //@DeleteMapping("/{id}")
+    @RequestMapping(value="/{id}", method={RequestMethod.DELETE, RequestMethod.GET})
     public void deleteAuthorById(@PathVariable("id") Long id){
         authorService.removeAuthorById(id);
     }
 
-    // For-each loop
-    @GetMapping("/allfor")
-    public List<AuthorDTO> getAuthorsForLoop() {
-        var authors = authorService.findAllAuthors();
-        List<AuthorDTO> authorsDtoList = new ArrayList<>();
-
-        for (var author : authors) {
-            authorsDtoList.add(convertToDTO(author));
-        }
-
-        return authorsDtoList;
-    }
-
-    @GetMapping("/oldall")
-    public List<AuthorDTO> getAuthors() {
-        var authorsList = StreamSupport
-                .stream(authorService.findAllAuthors().spliterator(), false)
-                .collect(Collectors.toList());
-        return authorsList
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    @GetMapping
-    public List<AuthorDTO> getAuthorsOptimized() {
-        return StreamSupport
-                .stream(authorService.findAllAuthors().spliterator(), false)
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    //Method to convert AuthorEntity to AuthorDTO
-    public AuthorDTO convertToDTO(AuthorEntity authorEntity){
-        AuthorDTO authorDTO = modelMapper.map(authorEntity, AuthorDTO.class);
-
-        //Custom conversion logic to avoid recursive mapping
-        Set<DocumentDTO> documents = authorEntity.getDocuments().stream()
-                .map(document -> {
-                    DocumentDTO documentDTO = modelMapper.map(document, DocumentDTO.class);
-                    documentDTO.setAuthors(null); // Break the cycle by not mapping authors
-                    return documentDTO;
-                })
-                .collect(Collectors.toSet());
-        authorDTO.setDocuments(documents);
-        return authorDTO;
-    }
-
-
-    /*private AuthorDTO convertToDTO(AuthorEntity entity){
+    private AuthorDTO convertToDTO(AuthorEntity entity){
         return modelMapper.map(entity, AuthorDTO.class);
-    }*/
+    }
 
     //Method to convert AuthorDTO to AuthorEntity
     private AuthorEntity convertToEntity(AuthorDTO dto){
@@ -152,4 +125,13 @@ public class AuthorController {
     private AuthorEntity convertToEntity(AuthorDTOBasicNoRef dto){
         return modelMapper.map(dto, AuthorEntity.class);
     }
+
+    private AuthorDTODocsOnly convertToDTODocsOnly(AuthorEntity entity){
+        return modelMapper.map(entity, AuthorDTODocsOnly.class);
+    }
+
+    private AuthorEntity convertToEntity(AuthorDTODocsOnly dto){
+        return modelMapper.map(dto, AuthorEntity.class);
+    }
+
 }

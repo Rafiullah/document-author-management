@@ -11,7 +11,7 @@ import java.util.Set;
 @Table(name = "document_entity")
 public class DocumentEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotNull(message = "Title is required for a Document.")
     private String title;
@@ -24,17 +24,13 @@ public class DocumentEntity {
             joinColumns = @JoinColumn(name = "article_id"),
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
-    //@JsonIgnoreProperties("documents")
-    //@JsonManagedReference
     private Set<AuthorEntity> authors = new HashSet<>();
-
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
     @JoinTable(name = "document_references",
             joinColumns = @JoinColumn(name = "document_id"),
             inverseJoinColumns = @JoinColumn(name = "reference_document_id"))
     private Set<DocumentEntity> references = new HashSet<>();
-
 
     public Long getId() {
         return id;
