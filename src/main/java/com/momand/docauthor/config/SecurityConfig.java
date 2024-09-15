@@ -27,7 +27,7 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    @Bean
+    /*@Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests(auth -> auth
@@ -36,6 +36,15 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
+        return http.build();
+    }*/
+
+    //Disable security of testing purposes
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf().disable()
+                .authorizeRequests(auth -> auth
+                        .anyRequest().permitAll());
         return http.build();
     }
 
