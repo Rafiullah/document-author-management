@@ -10,7 +10,13 @@ import org.springframework.web.context.request.WebRequest;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<?> handleNotFoundException(NotFoundException ex, WebRequest request){
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> handleNotFoundException(NotFoundException e, WebRequest request){
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleGlobalException(Exception e){
+        String customMessage = "Something went wrong. Please try again later";
+        return new ResponseEntity<>(customMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
