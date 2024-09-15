@@ -95,7 +95,7 @@ public class DocumentController {
     public DocumentDTOBasic postNewDocument(@Valid @RequestBody DocumentDTOBasic documentDTOBasic){
         logger.info("Received DocumentDTO: {}", documentDTOBasic.toString());
         var entity = convertBasicDTOToEntity(documentDTOBasic);
-        logger.info("Converted Document Entity: {}", entity);
+        logger.info("Converted Document Entity: {}", entity.toString());
         var document = documentService.addNewDocument(entity);
         return convertToDTOBasic(document);
     }

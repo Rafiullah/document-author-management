@@ -71,4 +71,15 @@ public class DocumentEntity {
     public void setReferences(Set<DocumentEntity> references) {
         this.references = references;
     }
+
+    @Override
+    public String toString() {
+        return "DocumentEntity{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", body='" + body + '\'' +
+                ", authors=" + authors +
+                ", references=" + references +
+                '}';
+    }
 }

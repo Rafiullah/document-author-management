@@ -16,6 +16,9 @@ public class DocumentDTOBasic {
 
     private Set<DocumentDTOBasicNoRef> references;
 
+    public String getTitle(){
+        return title;
+    }
     public void setTitle(String title) {
         this.title = title;
     }
@@ -42,5 +45,15 @@ public class DocumentDTOBasic {
 
     public void setReferences(Set<DocumentDTOBasicNoRef> references) {
         this.references = references;
+    }
+
+    @Override
+    public String toString() {
+        return "DocumentDTOBasic{" +
+                "title='" + title + '\'' +
+                ", body='" + body + '\'' +
+                ", authors=" + authors +
+                ", references=" + references +
+                '}';
     }
 }

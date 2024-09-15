@@ -2,16 +2,12 @@ package com.momand.docauthor.author.service;
 
 import com.momand.docauthor.author.entity.AuthorEntity;
 import com.momand.docauthor.author.repository.AuthorRepository;
-import com.momand.docauthor.document.entity.DocumentEntity;
 import com.momand.docauthor.document.repository.DocumentRepository;
 import com.momand.docauthor.exception.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.HashSet;
-import java.util.Set;
 
 
 @Service

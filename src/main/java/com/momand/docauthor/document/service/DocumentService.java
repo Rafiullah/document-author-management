@@ -31,11 +31,6 @@ public class DocumentService {
     }
 
     public DocumentEntity findDocumentById(Long id){
-        //Optional<DocumentEntity> documentEntity = documentRepository.findById(id);
-        //documentProducerKafka.sendDocumentEvent("Read document with id "+ id);
-        //return documentEntity.orElse(null);
-        //return documentRepository.findById(id)
-               // .orElseThrow(() -> new NotFoundException("Document not found with id " + id));
         return findOrThrow(id);
     }
 
@@ -44,11 +39,12 @@ public class DocumentService {
         documentRepository.deleteById(id);
     }
 
-
     //create new Document
     @Transactional
     public DocumentEntity addNewDocument(DocumentEntity documentEntity){
-        return documentRepository.save(documentEntity);
+        var addedEntity = documentRepository.save(documentEntity);
+        documentProducerKafka.sendDocumentEvent("Document with id "+ addedEntity.getId() + "added");
+        return addedEntity;
     }
 
     //create new document and add existing author for this document
