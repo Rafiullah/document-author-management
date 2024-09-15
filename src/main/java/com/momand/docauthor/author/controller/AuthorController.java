@@ -5,6 +5,7 @@ import com.momand.docauthor.author.dto.AuthorDTOBasic;
 import com.momand.docauthor.author.dto.AuthorDTOBasicNoRef;
 import com.momand.docauthor.author.entity.AuthorEntity;
 import com.momand.docauthor.author.service.AuthorService;
+import com.momand.docauthor.document.dto.DocumentDTO;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -109,10 +111,28 @@ public class AuthorController {
                 .collect(Collectors.toList());
     }
 
-    private AuthorDTO convertToDTO(AuthorEntity entity){
-        return modelMapper.map(entity, AuthorDTO.class);
+    //Method to convert AuthorEntity to AuthorDTO
+    public AuthorDTO convertToDTO(AuthorEntity authorEntity){
+        AuthorDTO authorDTO = modelMapper.map(authorEntity, AuthorDTO.class);
+
+        //Custom conversion logic to avoid recursive mapping
+        Set<DocumentDTO> documents = authorEntity.getDocuments().stream()
+                .map(document -> {
+                    DocumentDTO documentDTO = modelMapper.map(document, DocumentDTO.class);
+                    documentDTO.setAuthors(null); // Break the cycle by not mapping authors
+                    return documentDTO;
+                })
+                .collect(Collectors.toSet());
+        authorDTO.setDocuments(documents);
+        return authorDTO;
     }
 
+
+    /*private AuthorDTO convertToDTO(AuthorEntity entity){
+        return modelMapper.map(entity, AuthorDTO.class);
+    }*/
+
+    //Method to convert AuthorDTO to AuthorEntity
     private AuthorEntity convertToEntity(AuthorDTO dto){
         return modelMapper.map(dto, AuthorEntity.class);
     }

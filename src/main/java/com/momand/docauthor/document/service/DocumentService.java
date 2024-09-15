@@ -6,21 +6,22 @@ import com.momand.docauthor.document.entity.DocumentEntity;
 import com.momand.docauthor.document.repository.DocumentRepository;
 import com.momand.docauthor.exception.NotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-
+import java.util.*;
 
 @Service
 public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final AuthorService authorService;
+    private final DocumentProducerKafka documentProducerKafka;
 
-    public DocumentService(DocumentRepository documentRepository, AuthorService authorService) {
+    public DocumentService(DocumentRepository documentRepository, AuthorService authorService,
+                           DocumentProducerKafka documentProducerKafka) {
         this.documentRepository = documentRepository;
         this.authorService = authorService;
+        this.documentProducerKafka = documentProducerKafka;
     }
 
     public Iterable<DocumentEntity> findAllDocuments(){
@@ -29,7 +30,7 @@ public class DocumentService {
 
     public DocumentEntity findDocumentById(Long id){
         Optional<DocumentEntity> documentEntity = documentRepository.findById(id);
-        System.out.println("The authors list is: " + documentEntity.get().getAuthors());
+        documentProducerKafka.sendDocumentEvent("Read document with id "+ id);
         return documentEntity.orElse(null);
     }
 
@@ -39,6 +40,7 @@ public class DocumentService {
 
 
     //create new Document
+    @Transactional
     public DocumentEntity addNewDocument(DocumentEntity documentEntity){
         return documentRepository.save(documentEntity);
     }
@@ -58,16 +60,19 @@ public class DocumentService {
         DocumentEntity existingDocument = findDocumentById(documentId);
         AuthorEntity existingAuthor = authorService.findAuthorById(authorId);
 
-        System.out.println("the author is: " + existingAuthor);
-        System.out.println("the document is: " + existingDocument);
-
-        Set<AuthorEntity> authors = new HashSet<>();
-        authors.add(existingAuthor);
-
-        existingDocument.setAuthors(authors);
+        existingDocument.getAuthors().add(existingAuthor);
 
         return documentRepository.save(existingDocument);
+    }
 
+    //add a reference to document
+    public DocumentEntity addReferenceToDocument(Long documentId, Long referenceId){
+
+        DocumentEntity document = findDocumentById(documentId);
+        DocumentEntity reference = findDocumentById(referenceId);
+
+        document.getReferences().add(reference);
+        return documentRepository.save(reference);
     }
 
     public void updateDocumentEntity(Long id, DocumentEntity documentEntity){
@@ -80,9 +85,8 @@ public class DocumentService {
         );
     }
 
-
     public DocumentEntity addNewDocumentBasic(DocumentEntity documentEntity){
-             return documentRepository.save(documentEntity);
+        return documentRepository.save(documentEntity);
     }
 
 
