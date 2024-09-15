@@ -17,6 +17,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGlobalException(Exception e){
         String customMessage = "Something went wrong. Please try again later";
-        return new ResponseEntity<>(customMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(customMessage +e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
